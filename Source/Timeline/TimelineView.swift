@@ -443,8 +443,8 @@ public final class TimelineView: UIView {
     for overlappingEvents in groupsOfEvents {
       let totalCount = CGFloat(overlappingEvents.count)
       for (index, event) in overlappingEvents.enumerated() {
-        let startY = dateToY(event.descriptor.datePeriod.beginning!)
-        let endY = dateToY(event.descriptor.datePeriod.end!)
+        let startY = dateToY(event.descriptor.datePeriod.beginning!) + 3
+        let endY = dateToY(event.descriptor.datePeriod.end!) - 3
         let floatIndex = CGFloat(index)
         let oldX = floatIndex / totalCount * calendarWidth
         let newX = CGFloat(index) * eventWidth
