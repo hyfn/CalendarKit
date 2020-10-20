@@ -59,7 +59,7 @@ open class EventView: UIView {
     }
     drawsShadow = event.editedEvent != nil
 
-    layer.radius = 4
+    layer.cornerRadius = 4
     layer.masksToBounds = true
 
     setNeedsDisplay()
