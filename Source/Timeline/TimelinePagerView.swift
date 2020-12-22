@@ -16,6 +16,7 @@ public protocol TimelinePagerViewDelegate: AnyObject {
 
 public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScrollViewDelegate, DayViewStateUpdating, UIPageViewControllerDataSource, UIPageViewControllerDelegate, TimelineViewDelegate {
 
+  public var enablePaging = false
   public weak var dataSource: EventDataSource?
   public weak var delegate: TimelinePagerViewDelegate?
 
@@ -88,11 +89,15 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
   private func configure() {
     let vc = configureTimelineController(date: Date())
     pagingViewController.setViewControllers([vc], direction: .forward, animated: false, completion: nil)
-    pagingViewController.dataSource = self
-    pagingViewController.delegate = self
+    if enablePaging {
+      pagingViewController.dataSource = self
+      pagingViewController.delegate = self
+    }
     addSubview(pagingViewController.view!)
-    addGestureRecognizer(panGestureRecoognizer)
-    panGestureRecoognizer.delegate = self
+    if enablePaging {
+      addGestureRecognizer(panGestureRecoognizer)
+      panGestureRecoognizer.delegate = self
+    }
   }
 
   public func updateStyle(_ newStyle: TimelineStyle) {

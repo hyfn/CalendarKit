@@ -20,6 +20,7 @@ public final class TimelineView: UIView {
     return Date()
   }
 
+  private let sv = UIScrollView()
   private var eventViews = [EventView]()
   public private(set) var regularLayoutAttributes = [EventLayoutAttributes]()
   public private(set) var allDayLayoutAttributes = [EventLayoutAttributes]()
@@ -162,8 +163,8 @@ public final class TimelineView: UIView {
     addSubview(nowLine)
     
     // Add long press gesture recognizer
-    addGestureRecognizer(longPressGestureRecognizer)
-    addGestureRecognizer(tapGestureRecognizer)
+    sv.addGestureRecognizer(longPressGestureRecognizer)
+    sv.addGestureRecognizer(tapGestureRecognizer)
   }
   
   // MARK: - Event Handling
@@ -200,6 +201,8 @@ public final class TimelineView: UIView {
     for eventView in eventViews {
       let frame = eventView.frame
       if frame.contains(point) {
+      if let frame = eventView.superview?.convert(eventView.frame, to: self),
+         frame.contains(point) {
         return eventView
       }
     }
@@ -333,10 +336,22 @@ public final class TimelineView: UIView {
 
   override public func layoutSubviews() {
     super.layoutSubviews()
+    layoutScrollView()
     recalculateEventLayout()
     layoutEvents()
     layoutNowLine()
     layoutAllDayEvents()
+  }
+
+  private func layoutScrollView() {
+    sv.showsHorizontalScrollIndicator = false
+
+    var frame = self.bounds
+    frame.origin.x = style.leftInset
+    frame.size.width -= style.leftInset
+    sv.frame = frame
+
+    addSubview(sv)
   }
 
   private func layoutNowLine() {
@@ -437,17 +452,30 @@ public final class TimelineView: UIView {
     groupsOfEvents.append(overlappingEvents)
     overlappingEvents.removeAll()
 
+    let maxNumberOfEvents: CGFloat = 3
+    let eventWidth: CGFloat = UIScreen.main.bounds.width / 2.5
+    var xMax: CGFloat = 0
     for overlappingEvents in groupsOfEvents {
       let totalCount = CGFloat(overlappingEvents.count)
       for (index, event) in overlappingEvents.enumerated() {
-        let startY = dateToY(event.descriptor.datePeriod.lowerBound)
-        let endY = dateToY(event.descriptor.datePeriod.upperBound)
+        let startY = dateToY(event.descriptor.datePeriod.lowerBound) + 3
+        let endY = dateToY(event.descriptor.datePeriod.upperBound) - 3
         let floatIndex = CGFloat(index)
-        let x = style.leftInset + floatIndex / totalCount * calendarWidth
+        let oldX = floatIndex / totalCount * calendarWidth
+        let newX = CGFloat(index) * eventWidth
+        if xMax < newX {
+            xMax = newX
+        }
+        let x = totalCount > maxNumberOfEvents ? newX : oldX
         let equalWidth = calendarWidth / totalCount
-        event.frame = CGRect(x: x, y: startY, width: equalWidth, height: endY - startY)
+        let width = totalCount > maxNumberOfEvents ? eventWidth : equalWidth
+        event.frame = CGRect(x: x, y: startY, width: width, height: endY - startY)
       }
     }
+
+    var size = sv.frame.size
+    size.width = xMax + eventWidth
+    sv.contentSize = size
   }
 
   private func prepareEventViews() {
@@ -456,7 +484,7 @@ public final class TimelineView: UIView {
     for _ in regularLayoutAttributes {
       let newView = pool.dequeue()
       if newView.superview == nil {
-        addSubview(newView)
+        sv.addSubview(newView)
       }
       eventViews.append(newView)
     }
